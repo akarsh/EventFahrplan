@@ -5,6 +5,8 @@ import com.nhaarman.mockitokotlin2.mock
 import nerd.tuxmobil.fahrplan.congress.repositories.AppRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import org.mockito.ArgumentMatchers.anyBoolean
+import org.mockito.ArgumentMatchers.anyInt
 import nerd.tuxmobil.fahrplan.congress.models.Lecture as Event
 
 class FahrplanMiscTest {
@@ -134,7 +136,7 @@ class FahrplanMiscTest {
     @Test
     fun getStarredLecturesWithEmptyList() {
         val appRepository = mock<AppRepository> {
-            on { readLecturesOrderedByDateUtc() } doReturn emptyList()
+            on { loadLecturesForAllDays(anyBoolean()) } doReturn emptyList()
         }
         assertThat(FahrplanMisc.getStarredLectures(appRepository)).isEmpty()
     }
@@ -143,7 +145,7 @@ class FahrplanMiscTest {
     fun getStarredLecturesWithAllEvents() {
         val appRepository = mock<AppRepository> {
             val events = mutableListOf(EVENT_1001, EVENT_1002, EVENT_1003, EVENT_1004)
-            on { readLecturesOrderedByDateUtc() } doReturn events
+            on { loadLecturesForAllDays(anyBoolean()) } doReturn events
         }
         val starredEvents = FahrplanMisc.getStarredLectures(appRepository)
         assertThat(starredEvents).isNotEmpty()
@@ -155,7 +157,7 @@ class FahrplanMiscTest {
     @Test
     fun readChangesWithEmptyList() {
         val appRepository = mock<AppRepository> {
-            on { readLecturesOrderedByDateUtc() } doReturn emptyList()
+            on { loadLecturesForAllDays(anyBoolean()) } doReturn emptyList()
         }
         assertThat(FahrplanMisc.readChanges(appRepository)).isEmpty()
     }
@@ -164,7 +166,7 @@ class FahrplanMiscTest {
     fun readChangesWithAllEvents() {
         val appRepository = mock<AppRepository> {
             val events = mutableListOf(EVENT_2001, EVENT_2002, EVENT_2003, EVENT_2004, EVENT_2005)
-            on { readLecturesOrderedByDateUtc() } doReturn events
+            on { loadLecturesForAllDays(anyBoolean()) } doReturn events
         }
         val changedEvents = FahrplanMisc.readChanges(appRepository)
         assertThat(changedEvents).isNotEmpty()
@@ -176,17 +178,17 @@ class FahrplanMiscTest {
     @Test
     fun getUpcomingLecturesWithEmptyList() {
         val appRepository = mock<AppRepository> {
-            on { readLecturesOrderedByDateUtc() } doReturn emptyList()
+            on { loadLecturesForDayIndex(anyInt(), anyBoolean()) } doReturn emptyList()
         }
-        assertThat(FahrplanMisc.getUncanceledLectures(appRepository, FahrplanMisc.ALL_DAYS)).isEmpty()
+        assertThat(FahrplanMisc.getUncanceledLectures(appRepository, AppRepository.ALL_DAYS)).isEmpty()
     }
 
     @Test
     fun getUpcomingLecturesWithAllEvents() {
         val appRepository = mock<AppRepository> {
-            on { readLecturesOrderedByDateUtc() } doReturn mutableListOf(EVENT_3001, EVENT_3002)
+            on { loadLecturesForDayIndex(anyInt(), anyBoolean()) } doReturn mutableListOf(EVENT_3001, EVENT_3002)
         }
-        val upcomingEvents = FahrplanMisc.getUncanceledLectures(appRepository, FahrplanMisc.ALL_DAYS)
+        val upcomingEvents = FahrplanMisc.getUncanceledLectures(appRepository, AppRepository.ALL_DAYS)
         assertThat(upcomingEvents).isNotEmpty()
         assertThat(upcomingEvents.size).isEqualTo(1)
         assertThat(upcomingEvents).contains(EVENT_3001)

@@ -25,14 +25,24 @@ Please read the instructions in the [contribution guide](CONTRIBUTING.md) in ord
 
 ## Features
 
-* Daily overview of events
-* Read abstracts, descriptions of events
+* View program by day and rooms (side by side)
+* Custom grid layout for smartphones (**try landscape mode**) and tablets
+* Read detailed descriptions (speaker names, start time, room name, links, ...) of events
 * Add events to favorites list
 * Export favorites list
 * Setup alarms for individual events
 * Add events to your personal calendar
 * Share a link to an event with others
-* Supported languages: English, German, French, Portuguese (event descriptions excluded)
+* Keep track of program changes
+* Automatic program updates (configurable in settings)
+* Supported languages: Dutch, English, French, German, Italian, Portuguese, Russian, Spanish (event descriptions excluded)
+
+### Optional integration
+
+* The feedback system of [Frab][frab-github] and [Pretalx][pretalx-website]
+* [c3nav][c3nav-github] - An indoor navigation project
+* [Engelsystem][engelsystem-website] - Online tool for coordinating helpers and shifts on large events
+
 
 ## Event data
 
@@ -70,10 +80,12 @@ Portions Copyright 2008-2011 The K-9 Dog Walkers and 2006-2011 the Android Open 
 ```
 Copyright 2013-2019 johnjohndoe
 Copyright 2011-2015 Daniel Dorau
-Contributions from Adriano Pereira Junior, Akarsh Seggemu, Andy Scherzinger, Andreas Schildbach,
-bashtian, bjoernb, ButterflyOfFire, cacarrara, Caio Volpato, cketti, codingcatgirl, entropynil,
-koelnkalkverbot, ligi, Mateus Baptista, MichaelRocks, Noemis, Poschi, Sjors van Mierlo,
-Stefan Medack, SubOptimal, Torsten Grote, Vladimir Alabov
+Contributions from Adriano Pereira Junior, Akarsh Seggemu, Andrea Marziali,
+Andy Scherzinger, Andreas Schildbach, Animesh Verma, bashtian, bjoernb,
+ButterflyOfFire, cacarrara, Caio Volpato, cketti, codingcatgirl, entropynil,
+ideadapt, koelnkalkverbot, ligi, Mateus Baptista, MichaelRocks, Noemis, Poschi,
+Sjors van Mierlo, Stefan Medack, SubOptimal, Torsten Grote, Victor Herasme,
+Vladimir Alabov, Yanicka
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -88,12 +100,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
+[c3nav-github]: https://github.com/c3nav
 [campfahrplan-github]: https://github.com/tuxmobil/CampFahrplan
 [ccc-events]: http://events.ccc.de
+[engelsystem-website]: https://engelsystem.de
 [eventfahrplan-github]: https://github.com/EventFahrplan/EventFahrplan
 [frab-github]: https://github.com/frab/frab
 [johnjohndoe-github]: https://github.com/johnjohndoe
 [pentabarf-github]: https://github.com/nevs/pentabarf
+[pretalx-website]: https://pretalx.com
 [tuxmobil-github]: https://github.com/tuxmobil/CampFahrplan
 [issue]: https://github.com/EventFahrplan/EventFahrplan/issues
 

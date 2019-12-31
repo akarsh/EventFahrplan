@@ -11,8 +11,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.WindowManager;
 
+import kotlin.Unit;
 import nerd.tuxmobil.fahrplan.congress.R;
 import nerd.tuxmobil.fahrplan.congress.autoupdate.UpdateService;
 import nerd.tuxmobil.fahrplan.congress.net.ConnectivityObserver;
@@ -23,18 +23,12 @@ public abstract class BaseActivity extends AppCompatActivity {
     private ConnectivityObserver connectivityObserver;
 
     @Override
-    public void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
-    }
-
-    @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         connectivityObserver = new ConnectivityObserver(this, () -> {
             Log.d(getClass().getName(), "Network is available.");
             startUpdateService();
-            return null;
+            return Unit.INSTANCE;
         });
         connectivityObserver.start();
     }

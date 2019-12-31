@@ -3,13 +3,14 @@ package info.metadude.android.eventfahrplan.database.sqliteopenhelper;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.support.annotation.NonNull;
 
 import info.metadude.android.eventfahrplan.database.contract.FahrplanContract.HighlightsTable;
 import info.metadude.android.eventfahrplan.database.contract.FahrplanContract.HighlightsTable.Columns;
 
 public class HighlightDBOpenHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     private static final String DATABASE_NAME = "highlight";
 
@@ -19,8 +20,8 @@ public class HighlightDBOpenHelper extends SQLiteOpenHelper {
                     Columns.EVENT_ID + " INTEGER," +
                     Columns.HIGHLIGHT + " INTEGER);";
 
-    public HighlightDBOpenHelper(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    public HighlightDBOpenHelper(@NonNull Context context) {
+        super(context.getApplicationContext(), DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override

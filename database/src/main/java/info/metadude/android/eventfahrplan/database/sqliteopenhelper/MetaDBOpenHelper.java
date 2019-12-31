@@ -3,6 +3,7 @@ package info.metadude.android.eventfahrplan.database.sqliteopenhelper;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.support.annotation.NonNull;
 
 import info.metadude.android.eventfahrplan.database.contract.FahrplanContract.MetasTable;
 import info.metadude.android.eventfahrplan.database.contract.FahrplanContract.MetasTable.Columns;
@@ -10,7 +11,7 @@ import info.metadude.android.eventfahrplan.database.contract.FahrplanContract.Me
 
 public class MetaDBOpenHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     private static final String DATABASE_NAME = "meta";
 
@@ -24,8 +25,8 @@ public class MetaDBOpenHelper extends SQLiteOpenHelper {
                     Columns.DAY_CHANGE_MINUTE + " INTEGER, " +
                     Columns.ETAG + " TEXT);";
 
-    public MetaDBOpenHelper(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    public MetaDBOpenHelper(@NonNull Context context) {
+        super(context.getApplicationContext(), DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
@@ -50,6 +51,11 @@ public class MetaDBOpenHelper extends SQLiteOpenHelper {
         }
         if (oldVersion < 4) {
             // Clear database from 34C3.
+            db.execSQL("DROP TABLE IF EXISTS " + MetasTable.NAME);
+            onCreate(db);
+        }
+        if (oldVersion < 5) {
+            // Clear database from 35C3.
             db.execSQL("DROP TABLE IF EXISTS " + MetasTable.NAME);
             onCreate(db);
         }

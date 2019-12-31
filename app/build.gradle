@@ -7,6 +7,7 @@ ext.set("APP_VERSION", "${gitSha()}")
 
 apply plugin: "com.android.application"
 apply plugin: "kotlin-android"
+apply plugin: "de.mobilej.unmock"
 apply plugin: "org.sonarqube"
 apply from: "../sonarqube.gradle"
 
@@ -25,16 +26,19 @@ android {
     buildToolsVersion Android.buildToolsVersion
 
     defaultConfig {
-        versionCode 61
-        versionName "1.40.0"
+        versionCode 66
+        versionName "1.41.4"
         minSdkVersion Android.minSdkVersion
         targetSdkVersion Android.targetSdkVersion
         archivesBaseName = "Fahrplan-$versionName"
 
+        vectorDrawables.useSupportLibrary = true
+
         // Build information
         buildConfigField "String", "BUILD_TIME", "\"${buildTime()}\""
         buildConfigField "String", "GIT_SHA", "\"${gitSha()}\""
-        buildConfigField "String", "C3NAV_URL", "\"https://35c3.c3nav.de/l/\""
+        buildConfigField "String", "C3NAV_URL", "\"https://36c3.c3nav.de/l/\""
+        buildConfigField "boolean", "ENABLE_ENGELSYSTEM_SHIFTS", "false"
     }
 
     buildTypes {
@@ -67,6 +71,12 @@ android {
             keyAlias props['signing.cccamp2019-release.keyAlias']
             keyPassword props['signing.cccamp2019-release.keyPassword']
         }
+        ccc36c3 {
+            storeFile file(props['signing.ccc36c3-release.keystoreFilePath'])
+            storePassword props['signing.ccc36c3-release.keystorePassword']
+            keyAlias props['signing.ccc36c3-release.keyAlias']
+            keyPassword props['signing.ccc36c3-release.keyPassword']
+        }
     }
 
     def defaultDimension = "default"
@@ -96,7 +106,7 @@ android {
         cccamp2019 {
             dimension defaultDimension
             applicationId "info.metadude.android.cccamp.schedule"
-            versionName "1.40.0-CCCamp-Edition"
+            versionName "1.41.4-CCCamp-Edition"
             signingConfig signingConfigs.cccamp2019
             buildConfigField "String", "SCHEDULE_URL", '"https://data.c3voc.de/camp2019/everything.schedule.xml"'
             buildConfigField "String", "EVENT_URL", '"http://events.ccc.de/camp/2019/Fahrplan/events/%1$s.html"'
@@ -114,6 +124,27 @@ android {
             buildConfigField "String", "TRACE_DROID_EMAIL_ADDRESS", '"tobias.preuss+camp2019@googlemail.com"'
             buildConfigField "String", "SCHEDULE_FEEDBACK_URL", '"https://frab.cccv.de/en/camp2019/public/events/%s/feedback/new"'
         }
+        ccc36c3 {
+            dimension defaultDimension
+            applicationId "info.metadude.android.congress.schedule"
+            signingConfig signingConfigs.ccc36c3
+            buildConfigField "String", "SCHEDULE_URL", '"https://raw.githubusercontent.com/voc/36C3_schedule/master/everything.schedule.xml"'
+            buildConfigField "String", "EVENT_URL", '"https://events.ccc.de/congress/2019/Fahrplan/events/%1$s.html"'
+            buildConfigField "String", "SERVER_BACKEND_TYPE", '"frab"'
+            buildConfigField "int", "SCHEDULE_FIRST_DAY_START_YEAR", "2019"
+            buildConfigField "int", "SCHEDULE_FIRST_DAY_START_MONTH", "12"
+            buildConfigField "int", "SCHEDULE_FIRST_DAY_START_DAY", "27"
+            buildConfigField "int", "SCHEDULE_LAST_DAY_END_YEAR", "2019"
+            buildConfigField "int", "SCHEDULE_LAST_DAY_END_MONTH", "12"
+            buildConfigField "int", "SCHEDULE_LAST_DAY_END_DAY", "31"
+            buildConfigField "boolean", "SHOW_APP_DISCLAIMER", "false"
+            buildConfigField "boolean", "ENGAGE_C3NAV_APP_INSTALLATION", "true"
+            buildConfigField "boolean", "ENGAGE_GOOGLE_BETA_TESTING", "true"
+            buildConfigField "boolean", "ENGAGE_GOOGLE_PLAY_RATING", "true"
+            buildConfigField "boolean", "ENABLE_ENGELSYSTEM_SHIFTS", "true"
+            buildConfigField "String", "TRACE_DROID_EMAIL_ADDRESS", '"tobias.preuss+36c3@googlemail.com"'
+            buildConfigField "String", "SCHEDULE_FEEDBACK_URL", '"https://frab.cccv.de/en/36C3/public/events/%s/feedback/new"'
+        }
     }
 
     lintOptions {
@@ -126,6 +157,13 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
         sourceCompatibility JavaVersion.VERSION_1_8
     }
+}
+
+unMock {
+    keepStartingWith "libcore."
+    keep "android.net.Uri"
+    keep "android.util.Patterns"
+    keepAndRename "java.nio.charset.Charsets" to "xjava.nio.charset.Charsets"
 }
 
 tasks.withType(Test) {
@@ -145,7 +183,10 @@ tasks.withType(Test) {
 dependencies {
     implementation project(":database")
     implementation project(":network")
+    implementation project(":engelsystem")
 
+    implementation Libs.kotlinCoroutinesAndroid
+    implementation Libs.kotlinCoroutinesCore
     implementation Libs.kotlinStdlib
     implementation Libs.supportLibraryAppcompatV7
     implementation Libs.supportLibraryConstraintLayout
@@ -162,6 +203,8 @@ dependencies {
     testImplementation Libs.mockitoCore
     testImplementation Libs.mockitoKotlin
     testImplementation Libs.threeTenBp
+
+    unmock Libs.robolectric
 }
 
 def gitSha() {

@@ -47,7 +47,7 @@ public final class OnBootReceiver extends BroadcastReceiver {
         now.second += 15;
         now.normalize(true);
 
-        AppRepository appRepository = AppRepository.Companion.getInstance(context);
+        AppRepository appRepository = AppRepository.INSTANCE;
         List<Alarm> alarms = appRepository.readAlarms();
         for (Alarm alarm : alarms) {
             storedAlarmTime.set(alarm.getStartTime());
@@ -66,15 +66,15 @@ public final class OnBootReceiver extends BroadcastReceiver {
         boolean defaultValue = context.getResources().getBoolean(R.bool.preferences_auto_update_enabled_default_value);
         boolean doAutoUpdates = prefs.getBoolean("auto_update", defaultValue);
         if (doAutoUpdates) {
-            long lastFetch = prefs.getLong("last_fetch", 0);
+            long lastFetchedAt = appRepository.readScheduleLastFetchingTime();
             long nowMillis;
             now.setToNow();
             nowMillis = now.toMillis(true);
 
             long interval = FahrplanMisc.setUpdateAlarm(context, true);
 
-            MyApp.LogDebug(LOG_TAG, "now: " + nowMillis + ", last_fetch: " + lastFetch);
-            if (interval > 0 && nowMillis - lastFetch >= interval) {
+            MyApp.LogDebug(LOG_TAG, "now: " + nowMillis + ", lastFetchedAt: " + lastFetchedAt);
+            if (interval > 0 && nowMillis - lastFetchedAt >= interval) {
                 UpdateService.start(context);
             }
         }

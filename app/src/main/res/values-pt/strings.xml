@@ -95,8 +95,8 @@
 	</string>
     <string name="today">hoje</string>
     <string name="pref_auto_download">Atualizações automáticas</string>
-    <string name="parsing_error_generic">Erro desconhecido ao processar cronograma</string>
-    <string name="parsing_error_with_version">Erro ao processar versão do cronograma %s</string>
+    <string name="schedule_parsing_error_generic">Erro desconhecido ao processar cronograma</string>
+    <string name="schedule_parsing_error_with_version">Erro ao processar versão do cronograma %s</string>
     <string name="alarms_empty">
         Não há alarmes para exibir, você pode configurar alarmes
 		individuais para cada item no cronograma.
@@ -144,7 +144,7 @@
     <string name="snack_engage_google_play_beta_testing_title">Usuário avançado?</string>
     <string name="snack_engage_google_play_beta_testing_action">Torne-se um testador beta</string>
 
-    <string name="snack_engage_c3nav_title">Navegue dentro do prédio da 35C3! Com o aplicativo c3nav</string>
+    <string name="snack_engage_c3nav_title">Navegue dentro do prédio da <xliff:g example="35C3" id="conferenceName">%s</xliff:g>! Com o aplicativo c3nav</string>
     <string name="snack_engage_c3nav_action">Baixe agora!</string>
 
     <!-- TraceDroid -->

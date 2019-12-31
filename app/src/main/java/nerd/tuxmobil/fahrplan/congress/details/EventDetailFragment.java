@@ -1,6 +1,7 @@
 package nerd.tuxmobil.fahrplan.congress.details;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Typeface;
@@ -61,6 +62,8 @@ public class EventDetailFragment extends Fragment {
 
     private static final boolean SHOW_FEEDBACK_MENU_ITEM = !TextUtils.isEmpty(SCHEDULE_FEEDBACK_URL);
 
+    private AppRepository appRepository;
+
     private String eventId;
 
     private String title;
@@ -98,6 +101,12 @@ public class EventDetailFragment extends Fragment {
     private boolean requiresScheduleReload = false;
 
     private boolean hasArguments = false;
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        appRepository = AppRepository.INSTANCE;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -149,17 +158,27 @@ public class EventDetailFragment extends Fragment {
 
             locale = getResources().getConfiguration().locale;
 
-            FahrplanFragment.loadLectureList(activity, day, requiresScheduleReload);
+            // TODO: Remove this after 36C3. Right now it's only kept to minimize the likelihood of
+            //  unintended behavior changes.
+            FahrplanFragment.loadLectureList(appRepository, day, requiresScheduleReload);
+
             lecture = eventIdToLecture(eventId);
 
             // Detailbar
 
             TextView t;
-            t = view.findViewById(R.id.lecture_detailbar_date_time_location);
+            t = view.findViewById(R.id.lecture_detailbar_date_time);
             if (lecture != null && lecture.dateUTC > 0) {
                 DateFormat df = SimpleDateFormat
                         .getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT);
-                t.setText(df.format(new Date(lecture.dateUTC)) + " - " + room);
+                t.setText(df.format(new Date(lecture.dateUTC)));
+            } else {
+                t.setText("");
+            }
+
+            t = view.findViewById(R.id.lecture_detailbar_location);
+            if (t != null) {
+                t.setText(room);
             } else {
                 t.setText("");
             }
@@ -329,17 +348,7 @@ public class EventDetailFragment extends Fragment {
 
     @NonNull
     private Lecture eventIdToLecture(String eventId) {
-        if (MyApp.lectureList == null) {
-            throw new NullPointerException("Lecture list is null.");
-        }
-        for (Lecture lecture : MyApp.lectureList) {
-            if (lecture.lectureId.equals(eventId)) {
-                return lecture;
-            }
-        }
-        Lecture lecture = AppRepository.Companion.getInstance(requireContext()).readLectureByLectureId(eventId);
-        Log.d(LOG_TAG, lecture.lectureId + ": " + lecture.getChangedStateString());
-        throw new IllegalStateException("Lecture list does not contain eventId: " + eventId + ", lecture: " + lecture.getChangedStateString());
+        return appRepository.readLectureByLectureId(eventId);
     }
 
     @Override
@@ -360,7 +369,7 @@ public class EventDetailFragment extends Fragment {
     private void onAlarmTimesIndexPicked(int alarmTimesIndex) {
         Activity activity = requireActivity();
         if (lecture != null) {
-            FahrplanMisc.addAlarm(activity, lecture, alarmTimesIndex);
+            FahrplanMisc.addAlarm(activity, appRepository, lecture, alarmTimesIndex);
         } else {
             Log.e(getClass().getName(), "onAlarmTimesIndexPicked: lecture: null. alarmTimesIndex: " + alarmTimesIndex);
         }
@@ -393,14 +402,16 @@ public class EventDetailFragment extends Fragment {
             case R.id.menu_item_flag_as_favorite:
                 if (lecture != null) {
                     lecture.highlight = true;
-                    AppRepository.Companion.getInstance(activity).updateHighlight(lecture);
+                    appRepository.updateHighlight(lecture);
+                    appRepository.updateLecturesLegacy(lecture);
                 }
                 refreshUI(activity);
                 return true;
             case R.id.menu_item_unflag_as_favorite:
                 if (lecture != null) {
                     lecture.highlight = false;
-                    AppRepository.Companion.getInstance(activity).updateHighlight(lecture);
+                    appRepository.updateHighlight(lecture);
+                    appRepository.updateLecturesLegacy(lecture);
                 }
                 refreshUI(activity);
                 return true;
@@ -409,7 +420,7 @@ public class EventDetailFragment extends Fragment {
                 return true;
             case R.id.menu_item_delete_alarm:
                 if (lecture != null) {
-                    FahrplanMisc.deleteAlarm(activity, lecture);
+                    FahrplanMisc.deleteAlarm(activity, appRepository, lecture);
                 }
                 refreshUI(activity);
                 return true;

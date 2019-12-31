@@ -3,12 +3,13 @@ package info.metadude.android.eventfahrplan.database.sqliteopenhelper;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.support.annotation.NonNull;
 
 import info.metadude.android.eventfahrplan.database.contract.FahrplanContract.AlarmsTable;
 
 public class AlarmsDBOpenHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     private static final String DATABASE_NAME = "alarms";
 
@@ -24,8 +25,8 @@ public class AlarmsDBOpenHelper extends SQLiteOpenHelper {
                     AlarmsTable.Columns.DISPLAY_TIME + " INTEGER," +
                     AlarmsTable.Columns.DAY + " INTEGER);";
 
-    public AlarmsDBOpenHelper(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    public AlarmsDBOpenHelper(@NonNull Context context) {
+        super(context.getApplicationContext(), DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
@@ -42,6 +43,11 @@ public class AlarmsDBOpenHelper extends SQLiteOpenHelper {
         }
         if (oldVersion < 3) {
             // Clear database from 34C3.
+            db.execSQL("DROP TABLE IF EXISTS " + AlarmsTable.NAME);
+            onCreate(db);
+        }
+        if (oldVersion < 4) {
+            // Clear database from 35C3.
             db.execSQL("DROP TABLE IF EXISTS " + AlarmsTable.NAME);
             onCreate(db);
         }

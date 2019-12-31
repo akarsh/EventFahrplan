@@ -33,7 +33,7 @@ class LecturesDatabaseRepository(
         read(LecturesTable.NAME,
                 selection = "$EVENT_ID=?",
                 selectionArgs = arrayOf(lectureId))
-    }
+    }.first()
 
     fun queryLecturesForDayIndexOrderedByDateUtc(dayIndex: Int) = query {
         read(LecturesTable.NAME,
@@ -44,6 +44,22 @@ class LecturesDatabaseRepository(
 
     fun queryLecturesOrderedByDateUtc() = query {
         read(LecturesTable.NAME, orderBy = DATE_UTC)
+    }
+
+    fun queryLecturesWithoutRoom(roomName: String) = query {
+        read(LecturesTable.NAME,
+                selection = "$ROOM!=?",
+                selectionArgs = arrayOf(roomName),
+                orderBy = DATE_UTC
+        )
+    }
+
+    fun queryLecturesWithinRoom(roomName: String) = query {
+        read(LecturesTable.NAME,
+                selection = "$ROOM=?",
+                selectionArgs = arrayOf(roomName),
+                orderBy = DATE_UTC
+        )
     }
 
     private fun query(query: SQLiteDatabase.() -> Cursor): List<Lecture> = with(sqLiteOpenHelper.readableDatabase) {

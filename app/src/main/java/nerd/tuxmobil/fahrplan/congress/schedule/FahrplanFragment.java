@@ -18,6 +18,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.text.format.Time;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -46,6 +47,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import kotlin.Unit;
 import nerd.tuxmobil.fahrplan.congress.BuildConfig;
 import nerd.tuxmobil.fahrplan.congress.MyApp;
 import nerd.tuxmobil.fahrplan.congress.R;
@@ -55,6 +57,9 @@ import nerd.tuxmobil.fahrplan.congress.contract.BundleKeys;
 import nerd.tuxmobil.fahrplan.congress.extensions.Contexts;
 import nerd.tuxmobil.fahrplan.congress.models.Alarm;
 import nerd.tuxmobil.fahrplan.congress.models.Lecture;
+import nerd.tuxmobil.fahrplan.congress.net.ParseResult;
+import nerd.tuxmobil.fahrplan.congress.net.ParseScheduleResult;
+import nerd.tuxmobil.fahrplan.congress.net.ParseShiftsResult;
 import nerd.tuxmobil.fahrplan.congress.repositories.AppRepository;
 import nerd.tuxmobil.fahrplan.congress.sharing.LectureSharer;
 import nerd.tuxmobil.fahrplan.congress.sharing.SimpleLectureFormat;
@@ -91,6 +96,8 @@ public class FahrplanFragment extends Fragment implements OnClickListener {
     private LayoutInflater inflater;
 
     private Conference conference = new Conference();
+
+    private AppRepository appRepository;
 
     private HashMap<String, Integer> trackNameBackgroundColorDefaultPairs;
 
@@ -146,6 +153,12 @@ public class FahrplanFragment extends Fragment implements OnClickListener {
     private HashMap<String, Integer> trackAccentColorsHighlight;
 
     private Lecture lastSelectedLecture;
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        appRepository = AppRepository.INSTANCE;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -298,7 +311,7 @@ public class FahrplanFragment extends Fragment implements OnClickListener {
     private void viewDay(boolean reload) {
         Log.d(LOG_TAG, "viewDay(" + reload + ")");
 
-        loadLectureList(requireContext(), mDay, reload);
+        loadLectureList(appRepository, mDay, reload);
         List<Lecture> lectures = MyApp.lectureList;
         if (lectures != null && !lectures.isEmpty()) {
             conference.calculateTimeFrame(lectures, DateHelper::getMinutesOfDay);
@@ -324,7 +337,7 @@ public class FahrplanFragment extends Fragment implements OnClickListener {
         }
         MainActivity.getInstance().shouldScheduleScrollToCurrentTimeSlot(() -> {
             scrollToCurrent(mDay, boxHeight);
-            return null;
+            return Unit.INSTANCE;
         });
         updateNavigationMenuSelection();
     }
@@ -366,6 +379,9 @@ public class FahrplanFragment extends Fragment implements OnClickListener {
                     columnWidth, LayoutParams.WRAP_CONTENT, 1);
             p.gravity = Gravity.CENTER;
             roomTitle.setLayoutParams(p);
+            roomTitle.setMaxLines(1);
+            roomTitle.setEllipsize(TextUtils.TruncateAt.END);
+            roomTitle.setPadding(0, 0, getEventPadding(), 0);
             roomTitle.setGravity(Gravity.CENTER);
             roomTitle.setTypeface(light);
             int v = MyApp.roomList.get(i);
@@ -693,14 +709,13 @@ public class FahrplanFragment extends Fragment implements OnClickListener {
         eventView.setTag(lecture);
     }
 
-    public static void loadLectureList(Context context, int day, boolean force) {
+    public static void loadLectureList(@NonNull AppRepository appRepository, int day, boolean force) {
         MyApp.LogDebug(LOG_TAG, "load lectures of day " + day);
 
         if (!force && MyApp.lectureList != null && MyApp.lectureListDay == day) {
             return;
         }
 
-        AppRepository appRepository = AppRepository.Companion.getInstance(context);
         MyApp.lectureList = FahrplanMisc.getUncanceledLectures(appRepository, day);
         if (MyApp.lectureList.isEmpty()) {
             return;
@@ -712,15 +727,19 @@ public class FahrplanFragment extends Fragment implements OnClickListener {
         for (Lecture lecture : MyApp.lectureList) {
             if (!MyApp.roomsMap.containsKey(lecture.room)) {
                 if (!MyApp.roomsMap.containsValue(lecture.roomIndex)) {
+                    // room name : room index
                     MyApp.roomsMap.put(lecture.room, lecture.roomIndex);
                 } else {
                     // upgrade from DB without roomIndex
                     int newIndex;
                     for (newIndex = 0; newIndex < rooms.length; newIndex++) {
+                        // Is the current room in the list of prioritized rooms?
                         if (lecture.room.equals(rooms[newIndex])) {
                             break;
                         }
                     }
+                    // Room is not in the list of prioritized rooms.
+                    // A new room index is calculated now.
                     if (newIndex == rooms.length) {
                         newIndex = 0;
                         while (MyApp.roomsMap.containsValue(newIndex)) {
@@ -753,10 +772,10 @@ public class FahrplanFragment extends Fragment implements OnClickListener {
             Collections.sort(MyApp.lectureList, (lhs, rhs) -> Long.compare(lhs.dateUTC, rhs.dateUTC));
         }
 
-        loadAlarms(context);
+        loadAlarms(appRepository);
     }
 
-    public static void loadAlarms(Context context) {
+    public static void loadAlarms(@NonNull AppRepository appRepository) {
         if (MyApp.lectureList == null) {
             return;
         }
@@ -765,7 +784,7 @@ public class FahrplanFragment extends Fragment implements OnClickListener {
             lecture.hasAlarm = false;
         }
 
-        List<Alarm> alarms = AppRepository.Companion.getInstance(context).readAlarms();
+        List<Alarm> alarms = appRepository.readAlarms();
         MyApp.LogDebug(LOG_TAG, "Got " + alarms.size() + " alarm rows.");
         for (Alarm alarm : alarms) {
             MyApp.LogDebug(LOG_TAG, "Event " + alarm.getEventId() + " has alarm.");
@@ -807,13 +826,24 @@ public class FahrplanFragment extends Fragment implements OnClickListener {
         actionBar.setListNavigationCallbacks(arrayAdapter, new OnDaySelectedListener());
     }
 
-    public void onParseDone(Boolean result, String version) {
+    public void onParseDone(@NonNull ParseResult result) {
         Activity activity = requireActivity();
-        if (result) {
-            if (MyApp.meta.getNumDays() == 0 || !version.equals(MyApp.meta.getVersion())) {
-                AppRepository appRepository = AppRepository.Companion.getInstance(activity);
+        int lastShiftsHash = appRepository.readLastEngelsystemShiftsHash();
+        int currentShiftsHash = appRepository.readEngelsystemShiftsHash();
+        MyApp.LogDebug(LOG_TAG, "Shifts hash (OLD) = " + lastShiftsHash);
+        MyApp.LogDebug(LOG_TAG, "Shifts hash (NEW) = " + currentShiftsHash);
+        boolean shiftsChanged = currentShiftsHash != lastShiftsHash;
+        if (shiftsChanged) {
+            appRepository.updateLastEngelsystemShiftsHash(currentShiftsHash);
+        }
+        if (result.isSuccess()) {
+            if (MyApp.meta.getNumDays() == 0
+                    || (result instanceof ParseScheduleResult
+                    && !((ParseScheduleResult) result).getVersion().equals(MyApp.meta.getVersion()))
+                    || shiftsChanged
+            ) {
                 MyApp.meta = appRepository.readMeta();
-                FahrplanMisc.loadDays(activity);
+                FahrplanMisc.loadDays(appRepository);
                 if (MyApp.meta.getNumDays() > 1) {
                     buildNavigationMenu();
                 }
@@ -828,20 +858,39 @@ public class FahrplanFragment extends Fragment implements OnClickListener {
                 viewDay(false);
             }
         } else {
-            Toast.makeText(
-                    activity,
-                    getParsingErrorMessage(version),
-                    Toast.LENGTH_LONG).show();
+            String message = getParsingErrorMessage(result);
+            MyApp.LogDebug(getClass().getName(), message);
+            Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
         }
         activity.invalidateOptionsMenu();
     }
 
-    private String getParsingErrorMessage(final String version) {
-        if (version == null || version.length() < 1) {
-            return getString(R.string.parsing_error_generic);
-        } else {
-            return getString(R.string.parsing_error_with_version, version);
+    // TODO Consolidate HTTP status code handling with CustomHttpClient.showHttpError
+    private String getParsingErrorMessage(@NonNull ParseResult parseResult) {
+        String message = "";
+        if (parseResult instanceof ParseScheduleResult) {
+            String version = ((ParseScheduleResult) parseResult).getVersion();
+            if (version.isEmpty()) {
+                message = getString(R.string.schedule_parsing_error_generic);
+            } else {
+                message = getString(R.string.schedule_parsing_error_with_version, version);
+            }
+        } else if (parseResult instanceof ParseShiftsResult.Error) {
+            ParseShiftsResult.Error errorResult = (ParseShiftsResult.Error) parseResult;
+            if (errorResult.isForbidden()) {
+                message = getString(R.string.engelsystem_shifts_parsing_error_forbidden);
+            } else if (errorResult.isNotFound()) {
+                message = getString(R.string.engelsystem_shifts_parsing_error_not_found);
+            } else {
+                message = getString(R.string.engelsystem_shifts_parsing_error_generic);
+            }
+        } else if (parseResult instanceof ParseShiftsResult.Exception) {
+            message = getString(R.string.engelsystem_shifts_parsing_error_generic);
         }
+        if (message.isEmpty()) {
+            throw new IllegalStateException("Unknown parsing result: " + parseResult);
+        }
+        return message;
     }
 
     @Override
@@ -864,7 +913,7 @@ public class FahrplanFragment extends Fragment implements OnClickListener {
             Log.e(getClass().getName(), "onAlarmTimesIndexPicked: lecture: null. alarmTimesIndex: " + alarmTimesIndex);
             throw new NullPointerException("Lecture is null.");
         }
-        FahrplanMisc.addAlarm(requireContext(), lastSelectedLecture, alarmTimesIndex);
+        FahrplanMisc.addAlarm(requireContext(), appRepository, lastSelectedLecture, alarmTimesIndex);
         setBell(lastSelectedLecture);
         updateMenuItems();
     }
@@ -881,7 +930,7 @@ public class FahrplanFragment extends Fragment implements OnClickListener {
         switch (menuItemIndex) {
             case CONTEXT_MENU_ITEM_ID_FAVORITES:
                 lecture.highlight = !lecture.highlight;
-                AppRepository.Companion.getInstance(context).updateHighlight(lecture);
+                appRepository.updateHighlight(lecture);
                 setLectureBackground(lecture, contextMenuView);
                 setLectureTextColor(lecture, contextMenuView);
                 ((MainActivity) context).refreshFavoriteList();
@@ -891,7 +940,7 @@ public class FahrplanFragment extends Fragment implements OnClickListener {
                 showAlarmTimePicker();
                 break;
             case CONTEXT_MENU_ITEM_ID_DELETE_ALARM:
-                FahrplanMisc.deleteAlarm(context, lecture);
+                FahrplanMisc.deleteAlarm(context, appRepository, lecture);
                 setBell(lecture);
                 updateMenuItems();
                 break;
