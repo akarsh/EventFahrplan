@@ -1,6 +1,6 @@
 # Applications using EventFahrplan
 
-* <img src="/pictures/35C3_Schedule.png" alt="35C3 Schedule app logo" width="45" height="45"/> [35C3 Schedule](https://play.google.com/store/apps/details?id=info.metadude.android.congress.schedule)
+* <img src="/pictures/36C3_Schedule.png" alt="36C3 Schedule app logo" width="45" height="45"/> [36C3 Schedule](https://play.google.com/store/apps/details?id=info.metadude.android.congress.schedule)
 * <img src="/pictures/Bits_&_Bäume_2018.png" alt="Bits & Bäume 2018 app logo" width="45" height="45"/> [Bits & Bäume 2018](https://play.google.com/store/apps/details?id=info.metadude.android.bitsundbaeume.schedule)
 * <img src="/pictures/Camp_Schedule_2019.png" alt="Camp Schedule 2019 app logo" width="45" height="45"/> [Camp Schedule 2019](https://play.google.com/store/apps/details?id=info.metadude.android.cccamp.schedule) 
 * <img src="/pictures/Datenspuren_2019_Programm.png" alt="Datenspuren 2019 Programm app logo" width="45" height="45"/> [Datenspuren 2019 Programm](https://play.google.com/store/apps/details?id=info.metadude.android.datenspuren.schedule)
